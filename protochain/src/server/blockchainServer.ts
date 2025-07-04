@@ -59,7 +59,7 @@ app.post('/blocks', (req: Request, res: Response, next: NextFunction) => {
         res.status(400).json(validation);
 })
 
-app.get('/transactions/:hash?', (req: Request, res: Response, next: NextFunction) => {
+app.get('/transactions/{:hash}', (req: Request, res: Response, next: NextFunction) => {
 
     if (req.params.hash) {
         res.json(blockchain.getTransaction(req.params.hash));
