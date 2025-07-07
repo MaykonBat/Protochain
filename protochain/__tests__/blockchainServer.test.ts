@@ -3,10 +3,12 @@ import { describe, test, expect, jest } from '@jest/globals';
 import { app } from '../src/server/blockchainServer';
 import Block from '../src/lib/block';
 import Transaction from '../src/lib/transaction';
+import TransactionInput from '../src/lib/transactionInput';
 
 jest.mock('../src/lib/block');
 jest.mock('../src/lib/blockchain');
 jest.mock('../src/lib/transaction');
+jest.mock('../src/lib/transactionInput');
 
 describe('BlockchainServer Tests', () => {
     test('GET /status - Should return status', async () => {
@@ -51,7 +53,7 @@ describe('BlockchainServer Tests', () => {
     test('POST /blocks/ - Should add block', async () => {
         const block = new Block({
             index: 1
-        } as Block);        
+        } as Block);
         const response = await request(app)
             .post('/blocks/')
             .send(block);
@@ -71,7 +73,7 @@ describe('BlockchainServer Tests', () => {
     test('POST /blocks/ - Should NOT add block (invalid)', async () => {
         const block = new Block({
             index: -1
-        } as Block);  
+        } as Block);
         const response = await request(app)
             .post('/blocks/')
             .send(block);
@@ -89,7 +91,8 @@ describe('BlockchainServer Tests', () => {
 
     test('POST /transactions/ - Should add tx', async () => {
         const tx = new Transaction({
-            data: 'tx1'
+            txInput: new TransactionInput(),
+            to: "carteiraTo"
         } as Transaction);
 
         const response = await request(app)
@@ -98,5 +101,5 @@ describe('BlockchainServer Tests', () => {
 
         expect(response.status).toEqual(201);
     })
-    
+
 })
