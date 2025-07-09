@@ -6,6 +6,8 @@ import morgan from 'morgan';
 import Blockchain from '../lib/blockchain';
 import Block from '../lib/block';
 import Transaction from '../lib/transaction';
+import Wallet from '../lib/wallet';
+import TransactionOutput from '../lib/transactionOutput';
 
 /* c8 ignore next */
 const PORT: number = parseInt(`${process.env.BLOCKCHAIN_PORT || 3000}`);
@@ -19,7 +21,8 @@ if (process.argv.includes("--run"))
 
 app.use(express.json());
 
-const blockchain = new Blockchain();
+const wallet = new Wallet(process.env.BLOCKCHAIN_WALLET);
+const blockchain = new Blockchain(wallet.publicKey);
 
 app.get('/status', (req: Request, res: Response, next: NextFunction) => {
     res.json({
@@ -65,7 +68,7 @@ app.get('/transactions/{:hash}', (req: Request, res: Response, next: NextFunctio
     if (req.params.hash) {
         res.json(blockchain.getTransaction(req.params.hash));
     }
-    else 
+    else
         res.json({
             next: blockchain.mempool.slice(0, Blockchain.TX_PER_BLOCK),
             total: blockchain.mempool.length
@@ -84,9 +87,19 @@ app.post('/transactions', (req: Request, res: Response, next: NextFunction) => {
         res.status(400).json(validation);
 })
 
+app.get('/wallets/:wallet', (req: Request, res: Response, next: NextFunction) => {
+    const wallet = req.params.wallet;
+
+    const utxo = blockchain.getUtxo(wallet);
+    const balance = blockchain.getBalance(wallet);
+    const fee = blockchain.getFeePerTx();
+
+    return res.json({ balance, fee, utxo })
+})
+
 /* c8 ignore start */
 if (process.argv.includes("--run"))
-    app.listen(PORT, () => { console.log(`Blockchain server is running at ${PORT}`); })
+    app.listen(PORT, () => console.log(`Blockchain server is running at ${PORT}. Wallet: ${wallet.publicKey}`));
 /* c8 ignore end */
 
 export {

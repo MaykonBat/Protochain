@@ -7,6 +7,7 @@ import Wallet from '../lib/wallet';
 import Transaction from '../lib/transaction';
 import TransactionType from '../lib/transactionType';
 import TransactionInput from '../lib/transactionInput';
+import TransactionOutput from '../lib/transactionOutput';
 
 const BLOCKCHAIN_SERVER = process.env.BLOCKCHAIN_SERVER;
 
@@ -66,7 +67,7 @@ function createWallet() {
     preMenu();
 }
 
-function recoverWallet(){
+function recoverWallet() {
     console.clear();
     rl.question(`What is your private key or WIF?`, (wifOrPrivateKey) => {
         const wallet = new Wallet(wifOrPrivateKey);
@@ -79,7 +80,7 @@ function recoverWallet(){
     })
 }
 
-function getBalance(){
+async function getBalance() {
     console.clear();
 
     if (!myWalletPub) {
@@ -87,12 +88,12 @@ function getBalance(){
         return preMenu();
     }
 
-    //TODO: get balance via API
-
+    const { data } = await axios.get(`${BLOCKCHAIN_SERVER}wallets/${myWalletPub}`);
+    console.log("Balance: " + data.balance);
     preMenu();
 }
 
-function sendTx(){
+function sendTx() {
     console.clear();
 
     if (!myWalletPub) {
@@ -102,49 +103,73 @@ function sendTx(){
 
     console.log(`Your wallet is: ${myWalletPub}`);
     rl.question(`To wallet: `, (toWallet) => {
-        if(toWallet.length < 66){
+        if (toWallet.length < 66) {
             console.log(`Invalid wallet.`);
             return preMenu();
         }
 
         rl.question(`Amount: `, async (amountStr) => {
             const amount = parseInt(amountStr);
-            if(!amount){
+            if (!amount) {
                 console.log(`Invalid amount.`);
                 return preMenu();
             }
 
-            //TODO: balance validation
+            const walletResponse = await axios.get(`${BLOCKCHAIN_SERVER}wallets/${myWalletPub}`);
+            const balance = walletResponse.data.balance as number;
+            const fee = walletResponse.data.fee as number;
+            const utxo = walletResponse.data.utxo as TransactionOutput[];
 
-            const tx = new Transaction;
-            tx.timestamp = Date.now();
-            tx.to = toWallet;
-            tx.type = TransactionType.REGULAR;
-            tx.txInput = new TransactionInput({
-                amount,
-                fromAddress: myWalletPub
-            } as TransactionInput);
+            if (balance < amount + fee) {
+                console.log(`Insufficient balance (tx + fee).`);
+                return preMenu();
+            }
 
-            tx.txInput.sign(myWalletPriv);
+            const txInputs = utxo.map(txo => TransactionInput.fromTxo(txo));
+            txInputs.forEach((txi, index, arr) => arr[index].sign(myWalletPriv));
+
+            //transação de transferência:
+            const txOutputs = [] as TransactionOutput[];
+            txOutputs.push(new TransactionOutput({
+                toAddress: toWallet,
+                amount
+            } as TransactionOutput));
+
+            //transação de troco:
+            const remainingBalance = balance - amount - fee;
+            txOutputs.push(new TransactionOutput({
+                toAddress: myWalletPub,
+                amount: remainingBalance
+            } as TransactionOutput));
+
+            const tx = new Transaction({
+                txInputs,
+                txOutputs
+            } as Transaction);
+
             tx.hash = tx.getHash();
+            tx.txOutputs.forEach((txo, index, arr) => arr[index].tx = tx.hash);
+
+            console.log(tx);
+            console.log("Remaining Balance: " + remainingBalance);
 
             try {
                 const txResponse = await axios.post(`${BLOCKCHAIN_SERVER}transactions/`, tx);
                 console.log(`Transaction accepted. Waiting for miners!`);
                 console.log(txResponse.data.hash);
             }
-            catch(err: any) {
+            catch (err: any) {
                 console.error(err.response ? err.response.data : err.message);
             }
             return preMenu();
 
         })
     })
-    
+
     preMenu();
 }
 
-function searchTx(){
+function searchTx() {
     console.clear();
     rl.question(`Your tx hash: `, async (hash) => {
         const response = await axios.get(`${BLOCKCHAIN_SERVER}transactions/${hash}`);

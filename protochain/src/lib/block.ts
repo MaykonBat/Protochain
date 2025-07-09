@@ -66,20 +66,21 @@ export default class Block {
      * @param previousIndex The previous block index
      * @param difficulty The blockchain current difficulty
      */
-    isValid(previousHash: string, previousIndex: number, difficulty: number): Validation {
+    isValid(previousHash: string, previousIndex: number, difficulty: number, feePerTx: number): Validation {
 
         if (this.transactions && this.transactions.length) {
             const feetxs = this.transactions.filter(tx => tx.type === TransactionType.FEE)
             if (!feetxs.length)
                 return new Validation(false, "No fee tx.");
-            
+
             if (feetxs.length > 1)
                 return new Validation(false, "Too many fees.");
 
-            if (feetxs[0].to !== this.miner)
+            if (!feetxs[0].txOutputs.some(txo => txo.toAddress === this.miner))
                 return new Validation(false, "Invalid fee tx: different from miner.");
 
-            const validations = this.transactions.map(tx => tx.isValid());
+            const totalFees = feePerTx * this.transactions.filter(tx => tx.type !== TransactionType.FEE).length;
+            const validations = this.transactions.map(tx => tx.isValid(difficulty, totalFees));
             const errors = validations.filter(v => !v.success).map(v => v.message);
             if (errors.length > 0)
                 return new Validation(false, "Invalid block due to invalid tx: " + errors.reduce((a, b) => a + b));
@@ -89,7 +90,7 @@ export default class Block {
         if (previousIndex !== this.index - 1) return new Validation(false, "Invalid index.");
         if (this.timestamp < 1) return new Validation(false, "Invalid timestamp.")
         if (this.previousHash !== previousHash) return new Validation(false, "Invalid previous hash.");
-        if (!this.nonce || !this.miner) return new Validation(false, "No mined.");
+        if (this.nonce < 1 || !this.miner) return new Validation(false, "No mined.");
 
         const prefix = new Array(difficulty + 1).join("0");
         if (this.hash !== this.getHash() || !this.hash.startsWith(prefix))
