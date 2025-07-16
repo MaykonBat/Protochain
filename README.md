@@ -1,2 +1,2 @@
-# web23
-Web23 course projects
+# PROTOCHAIN
+A Blockchain example with miners and wallets.
