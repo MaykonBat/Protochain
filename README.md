@@ -1,2 +1,2 @@
 # PROTOCHAIN
-A Blockchain example with miners and wallets.
+A simplified Bitcoin blockchain, simulating miner validation with dynamic difficulty adjustment.
