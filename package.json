@@ -1,0 +1,42 @@
+{
+  "name": "protochain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx tsc",
+    "dev": "npx nodemon ./src/lib/blockchain.ts --watch './src/' -e ts",
+    "start": "node ./dist/blockchain.js",
+    "test": "jest",
+    "blockchain": "ts-node ./src/server/blockchainServer.ts --run",
+    "miner": "ts-node ./src/client/minerClient.ts",
+    "wallet": "ts-node ./src/client/walletClient.ts"
+  },
+  "keywords": [],
+  "author": "LuizTools",
+  "license": "MIT",
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@types/crypto-js": "^4.2.2",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^25.3.5",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.3.1",
+    "ecpair": "^2.1.0",
+    "express": "^5.2.1",
+    "morgan": "^1.10.1",
+    "tiny-secp256k1": "^2.2.1"
+  }
+}
