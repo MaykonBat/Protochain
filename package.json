@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx tsc",
-    "dev": "npx nodemon ./src/lib/blockchain.ts --watch './src/' -e ts",
+    "dev": "npx nodemon --watch src --ext ts,tsx --exec tsx ./src/lib/blockchain.ts",
     "start": "node ./dist/blockchain.js",
     "test": "jest",
-    "blockchain": "ts-node ./src/server/blockchainServer.ts --run",
-    "miner": "ts-node ./src/client/minerClient.ts",
-    "wallet": "ts-node ./src/client/walletClient.ts"
+    "blockchain": "tsx ./src/server/blockchainServer.ts --run",
+    "miner": "tsx ./src/client/minerClient.ts",
+    "wallet": "tsx ./src/client/walletClient.ts"
+
   },
   "keywords": [],
   "author": "LuizTools",
